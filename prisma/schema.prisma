@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id          String   @id @default(cuid())
+  type        String
+  identifier  String
+  payload     Json
+  sourceHash  String   @unique
+  createdAt   DateTime @default(now())
+  productMap  ProductMap?
+  runLogs     RunLog[]
+
+  @@index([type, identifier])
+}
+
+model ProductMap {
+  id               String   @id @default(cuid())
+  sourceId         String   @unique
+  dsersProductId   String?
+  shopifyProductId String?
+  variantMap       Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  source Source @relation(fields: [sourceId], references: [id])
+
+  @@index([dsersProductId])
+  @@index([shopifyProductId])
+}
+
+model RunLog {
+  id        String   @id @default(cuid())
+  sourceId  String?
+  level     String
+  message   String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  source Source? @relation(fields: [sourceId], references: [id])
+
+  @@index([createdAt])
+}
+
+model RateLimitState {
+  id            String   @id @default(cuid())
+  key           String
+  windowStart   DateTime
+  processed     Int      @default(0)
+  metadata      Json?
+  updatedAt     DateTime @updatedAt
+
+  @@unique([key, windowStart])
+  @@index([windowStart])
+}
