@@ -85,6 +85,26 @@ async function processJob(job: Job<ProductJobData, ProductJobResult | undefined>
       const baseCost = typeof variant.price === 'number' && variant.price > 0 ? variant.price : fallbackBaseCost;
       return calculatePricing({ baseCost });
     });
+
+    const productOptionNames = normalized.options.map((option) => option.name);
+    const variantOptionValues = normalized.variants.map((variant) => {
+      if (productOptionNames.length === 0) {
+        return [] as string[];
+      }
+      const optionsByName = new Map(variant.options.map((option) => [option.name, option.value] as const));
+      return productOptionNames.map((name, index) => {
+        const value = optionsByName.get(name);
+        if (value) {
+          return value;
+        }
+        const fallback = variant.options[index]?.value;
+        if (fallback) {
+          logger.warn({ variant: variant.title, optionName: name }, 'Variant option name mismatch; using positional fallback');
+          return fallback;
+        }
+        throw new Error(`Variant ${variant.title} missing option value for ${name}`);
+      });
+    });
     const content = await generateContent({
       title: normalized.title,
       attributes: normalized.attributes,
@@ -114,15 +134,17 @@ async function processJob(job: Job<ProductJobData, ProductJobResult | undefined>
       vendor: normalized.vendor ?? 'ADEALTD',
       productType: normalized.productType ?? 'Lifestyle',
       tags: normalized.tags ?? [],
+      options: normalized.options,
       variants: normalized.variants.map((variant, index) => {
         const pricing = variantPricing[index];
+        const optionValues = variantOptionValues[index] ?? [];
         return {
           title: variant.title,
           price: pricing.price.toString(),
           compareAtPrice: pricing.compareAtPrice.toString(),
           sku: variant.sku ?? undefined,
           inventoryPolicy: variant.inventoryPolicy ?? 'CONTINUE',
-          selectedOptions: variant.options
+          options: optionValues
         };
       }),
       media: images,

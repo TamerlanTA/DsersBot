@@ -197,7 +197,10 @@ describe('pipeline dry run', () => {
 
     const shopifyPayload = globalThis.__shopifyCreatePayloads?.[0];
     expect(shopifyPayload).toBeDefined();
+    expect(shopifyPayload.options).toEqual(normalized.options);
     expect(shopifyPayload.variants[0].price).toBe('12.36');
     expect(shopifyPayload.variants[1].price).toBe('30.9');
+    expect(shopifyPayload.variants[0].options).toEqual(['Standard']);
+    expect(shopifyPayload.variants[1].options).toEqual(['Deluxe']);
   });
 });

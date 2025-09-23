@@ -31,7 +31,7 @@ export interface ShopifyVariantInput {
   weight?: number;
   weightUnit?: 'GRAMS' | 'KILOGRAMS' | 'POUNDS' | 'OUNCES';
   barcode?: string;
-  selectedOptions?: { name: string; value: string }[];
+  options: string[];
 }
 
 export interface ShopifyMediaInput {
@@ -141,7 +141,7 @@ export async function createProduct(input: ShopifyProductInput): Promise<Shopify
         weight: variant.weight,
         weightUnit: variant.weightUnit ?? 'GRAMS',
         barcode: variant.barcode,
-        selectedOptions: variant.selectedOptions
+        options: variant.options
       })),
       metafields: input.metafields?.map((m) => ({
         namespace: m.namespace,
@@ -193,7 +193,7 @@ export async function bulkCreateVariants(productId: string, variants: ShopifyVar
     variants: variants.map((variant) => ({
       price: toMoney(variant.price),
       compareAtPrice: variant.compareAtPrice ? toMoney(variant.compareAtPrice) : undefined,
-      options: variant.selectedOptions,
+      options: variant.options,
       sku: variant.sku,
       inventoryPolicy: variant.inventoryPolicy ?? 'DENY',
       requiresShipping: variant.requiresShipping ?? true
